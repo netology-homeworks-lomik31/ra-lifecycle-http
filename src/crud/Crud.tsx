@@ -78,7 +78,13 @@ async function request(url: string, method = "GET", data: object | null = null) 
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
         }
-        return await response.json();
+        let res;
+        try {
+            res = await response.json();
+        } catch {
+            res = null;
+        }
+        return res;
     } catch (error) {
         console.error("Request error:", error);
         throw error;
