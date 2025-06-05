@@ -1,69 +1,76 @@
 import type CardType from "./types/Cards";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 function Crud() {
     const [cards, setCards] = useState<CardType[]>([]);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
-    const deleteCard = (id: number) => {
-        request(`http://localhost:7070/notes/${id}`, "DELETE").then(() => {
-            request("http://localhost:7070/notes").then(data => {
-                setCards(data);
-            }).catch(error => {
-                console.error("Error fetching cards:", error);
-            });
-        }).catch(error => {
+    const [newCardContent, setNewCardContent] = useState("");
+
+    const fetchCards = async () => {
+        try {
+            const data = await request("http://localhost:7070/notes");
+            setCards(data);
+        } catch (error) {
+            console.error("Error fetching cards:", error);
+        }
+    };
+
+    const deleteCard = async (id: number) => {
+        try {
+            await request(`http://localhost:7070/notes/${id}`, "DELETE");
+            await fetchCards();
+        } catch (error) {
             console.error("Error deleting card:", error);
-        })
-    }
-    const createCard = () => {
-        request("http://localhost:7070/notes", "POST", {
-            id: 0,
-            content: inputRef.current?.value || ""
-        }).then(() => {
-            request("http://localhost:7070/notes").then(data => {
-                setCards(data);
-            }).catch(error => {
-                console.error("Error fetching cards:", error);
+        }
+    };
+    const createCard = async () => {
+        if (!newCardContent.trim()) return;
+
+        try {
+            await request("http://localhost:7070/notes", "POST", {
+                id: 0,
+                content: newCardContent.trim(),
             });
-        }).catch(error => {
+            setNewCardContent("");
+            await fetchCards();
+        } catch (error) {
             console.error("Error creating card:", error);
-        });
-        inputRef.current!.value = "";
-    }
-    const updateCards = () => {
-        request("http://localhost:7070/notes").then(data => {
-            setCards(data);
-        }).catch(error => {
-            console.error("Error fetching cards:", error);
-        });
-    }
+        }
+    };
+
     useEffect(() => {
-        request("http://localhost:7070/notes").then(data => {
-            setCards(data);
-        }).catch(error => {
-            console.error("Error fetching cards:", error);
-        });
+        fetchCards();
     }, []);
 
     return (
         <div className="crud">
-            <button onClick={() => updateCards()}>update</button>
+            <button onClick={fetchCards}>update</button>
             <ul className="cards">
                 {cards.map(card => (
                     <li key={card.id}>
                         <div className="card">
-                            <button className="delete-button" onClick={() => deleteCard(card.id)}>X</button>
+                            <button
+                                className="delete-button"
+                                onClick={() => deleteCard(card.id)}
+                            >
+                                X
+                            </button>
                             <p className="card-text">{card.content}</p>
                         </div>
                     </li>
                 ))}
             </ul>
-            <textarea className="newCard" ref={inputRef}></textarea>
-            <button className="createButton" onClick={() => createCard()}>
+
+            <textarea
+                className="newCard"
+                value={newCardContent}
+                onChange={(e) => setNewCardContent(e.target.value)}
+            />
+
+            <button className="createButton" onClick={createCard}>
                 Create
             </button>
         </div>
-    )
+    );
 }
 
 async function request(url: string, method = "GET", data: object | null = null) {
@@ -74,21 +81,15 @@ async function request(url: string, method = "GET", data: object | null = null) 
         },
         body: data ? JSON.stringify(data) : undefined
     };
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+    }
+
     try {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-        let res;
-        try {
-            res = await response.json();
-        } catch {
-            res = null;
-        }
-        return res;
-    } catch (error) {
-        console.error("Request error:", error);
-        throw error;
+        return await response.json();
+    } catch {
+        return null;
     }
 }
 

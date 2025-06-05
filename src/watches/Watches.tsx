@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import Watch from './components/Watch';
-import WatchesFrom from './components/WatchesForm';
+import { useState, useEffect } from "react";
+import Watch from "./components/Watch";
+import WatchesFrom from "./components/WatchesForm";
 
-import type Clock from './types/Clock';
+import type Clock from "./types/Clock";
 
 function Watches() {
     const [clocks, setClocks] = useState<Clock[]>([]);

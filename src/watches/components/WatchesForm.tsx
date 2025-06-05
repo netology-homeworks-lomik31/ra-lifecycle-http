@@ -1,25 +1,40 @@
-import { useRef } from 'react';
+import { useState } from "react";
 
-import type WatchFormProps from '../types/WatchFormProps';
+import type WatchFormProps from "../types/WatchFormProps";
 
 function ClockForm({ onCreate }: WatchFormProps) {
-    const nameRef = useRef<HTMLInputElement>(null);
-    const offsetRef = useRef<HTMLInputElement>(null);
+    const [name, setName] = useState("");
+    const [offset, setOffset] = useState<string>(""); // храним как строку, чтобы легко очищать
 
     const handleCreate = () => {
-        const name = nameRef.current?.value || 'Unnamed';
-        const offset = parseFloat(offsetRef.current?.value || '0');
+        const trimmedName = name.trim() || "Unnamed";
+        const parsedOffset = parseInt(offset) || 0;
 
-        onCreate(name, offset);
+        onCreate(trimmedName, parsedOffset);
+
+        setName("");
+        setOffset("");
     };
 
     return (
         <div>
-        <input ref={nameRef} type="text" placeholder="Название" />
-        <input ref={offsetRef} type="number" placeholder="Смещение в часах" />
-        <button onClick={handleCreate}>Создать</button>
+            <input
+                type="text"
+                placeholder="Название"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+            />
+
+            <input
+                type="number"
+                placeholder="Смещение в часах"
+                value={offset}
+                onChange={(e) => setOffset(e.target.value)}
+            />
+
+            <button onClick={handleCreate}>Создать</button>
         </div>
     );
-};
+}
 
 export default ClockForm;
