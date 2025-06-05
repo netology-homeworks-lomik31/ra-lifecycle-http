@@ -4,6 +4,39 @@ import { useEffect, useState, useRef } from "react";
 function Crud() {
     const [cards, setCards] = useState<CardType[]>([]);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const deleteCard = (id: number) => {
+        request(`http://localhost:7070/notes/${id}`, "DELETE").then(() => {
+            request("http://localhost:7070/notes").then(data => {
+                setCards(data);
+            }).catch(error => {
+                console.error("Error fetching cards:", error);
+            });
+        }).catch(error => {
+            console.error("Error deleting card:", error);
+        })
+    }
+    const createCard = () => {
+        request("http://localhost:7070/notes", "POST", {
+            id: 0,
+            content: inputRef.current?.value || ""
+        }).then(() => {
+            request("http://localhost:7070/notes").then(data => {
+                setCards(data);
+            }).catch(error => {
+                console.error("Error fetching cards:", error);
+            });
+        }).catch(error => {
+            console.error("Error creating card:", error);
+        });
+        inputRef.current!.value = "";
+    }
+    const updateCards = () => {
+        request("http://localhost:7070/notes").then(data => {
+            setCards(data);
+        }).catch(error => {
+            console.error("Error fetching cards:", error);
+        });
+    }
     useEffect(() => {
         request("http://localhost:7070/notes").then(data => {
             setCards(data);
@@ -14,51 +47,19 @@ function Crud() {
 
     return (
         <div className="crud">
-            <button onClick={() => {
-                request("http://localhost:7070/notes").then(data => {
-                    setCards(data);
-                }).catch(error => {
-                    console.error("Error fetching cards:", error);
-                });
-            }}>update</button>
+            <button onClick={() => updateCards()}>update</button>
             <ul className="cards">
                 {cards.map(card => (
                     <li key={card.id}>
                         <div className="card">
-                            <button className="delete-button" onClick={
-                                (() => {
-                                    request(`http://localhost:7070/notes/${card.id}`, "DELETE").then(() => {
-                                        request("http://localhost:7070/notes").then(data => {
-                                            setCards(data);
-                                        }).catch(error => {
-                                            console.error("Error fetching cards:", error);
-                                        });
-                                    }).catch(error => {
-                                        console.error("Error deleting card:", error);
-                                    })
-                                })
-                            }>X</button>
+                            <button className="delete-button" onClick={() => deleteCard(card.id)}>X</button>
                             <p className="card-text">{card.content}</p>
                         </div>
                     </li>
                 ))}
             </ul>
             <textarea className="newCard" ref={inputRef}></textarea>
-            <button className="createButton" onClick={() => {
-                request("http://localhost:7070/notes", "POST", {
-                    id: 0,
-                    content: inputRef.current?.value || ""
-                }).then(() => {
-                    request("http://localhost:7070/notes").then(data => {
-                        setCards(data);
-                    }).catch(error => {
-                        console.error("Error fetching cards:", error);
-                    });
-                }).catch(error => {
-                    console.error("Error creating card:", error);
-                });
-                inputRef.current!.value = "";
-            }}>
+            <button className="createButton" onClick={() => createCard()}>
                 Create
             </button>
         </div>
